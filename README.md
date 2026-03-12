@@ -2,20 +2,21 @@
 
 A local-first sleep and energy tracking app that runs **right in your browser** — no app store, no account needed.
 
-## ⚠️ Getting the link to work — do this first (30 seconds)
-
-> If you see a **404 page**, GitHub Pages is not enabled yet.  
-> Fix it in **3 clicks**:
-
-1. Open **https://github.com/CHARLESWILLIAMMM/sleep-tracker/settings/pages**
-2. Under **"Build and deployment → Source"**, choose **Deploy from a branch**
-3. Set **Branch** to `main` (or `gh-pages` once CI has run) and folder to `/ (root)`, then click **Save**
-
-After that, every push automatically runs the tests and deploys. The live link will be:
+## 🔗 Live link
 
 **→ [https://charleswilliammm.github.io/sleep-tracker/](https://charleswilliammm.github.io/sleep-tracker/)**
 
-On Android: tap the three-dot menu → **"Add to Home Screen"** to install it like a native app.
+---
+
+## ⚙️ GitHub Pages setup (one-time, 3 clicks)
+
+1. Go to **https://github.com/CHARLESWILLIAMMM/sleep-tracker/settings/pages**
+2. **Source** → `Deploy from a branch`
+3. **Branch** → `copilot/add-sleep-debt-calculation` · **Folder** → `/ (root)` → click **Save**
+
+> After the PR is merged into `main`, change the branch to `main` and keep folder `/ (root)`.
+
+On Android: tap the three-dot menu → **"Add to Home Screen"** to install it as a native app.
 
 ---
 
@@ -45,7 +46,7 @@ All 27 unit + integration tests should pass.
 
 ```
 sleep-tracker/
-├── index.html                       ← PWA web app (deployed to GitHub Pages)
+├── index.html                       ← PWA web app (served by GitHub Pages)
 ├── manifest.json                    ← PWA manifest (installable on Android)
 ├── sw.js                            ← Service worker (offline support)
 ├── icon.svg                         ← App icon
@@ -61,5 +62,5 @@ sleep-tracker/
 │   └── ViewModels/SleepViewModel.cs ← Sleep Debt + Energy Curve algorithms
 │
 ├── SleepTracker.Tests/              ← xUnit tests for core algorithms
-└── .github/workflows/pages.yml     ← CI: runs tests → deploys to GitHub Pages
+└── .github/workflows/pages.yml     ← CI: runs tests on every push
 ```

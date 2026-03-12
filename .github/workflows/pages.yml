@@ -1,22 +1,14 @@
-name: Deploy Sleep Tracker to GitHub Pages
+name: Run tests
 
 on:
   push:
     branches:
       - main
       - "copilot/**"
+  pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: write
-
-# Only one deployment at a time; do not cancel in-progress runs
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
-  # ── Run tests first ─────────────────────────────────────────────────────
   test:
     name: Run unit tests
     runs-on: ubuntu-latest
@@ -33,28 +25,3 @@ jobs:
 
       - name: Run tests
         run: dotnet test SleepTracker.Tests/SleepTracker.Tests.csproj --no-restore --verbosity minimal
-
-  # ── Deploy docs/ to the gh-pages branch ─────────────────────────────────
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Push web files to gh-pages branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p /tmp/gh-pages
-          cp index.html manifest.json sw.js icon.svg /tmp/gh-pages/
-          cd /tmp/gh-pages
-          git init
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "Deploy to GitHub Pages from ${{ github.sha }}"
-          git push --force \
-            "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" \
-            HEAD:gh-pages
