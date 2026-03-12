@@ -31,77 +31,40 @@
       --radius:    18px;
     }
 
+    /* ── Mobile-first base layout ──────────────────────────────────────── */
+    html { height: 100%; }
+
     body {
       font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: radial-gradient(ellipse at top, #1a1a3e 0%, #050510 70%);
-      min-height: 100vh;
+      height: 100%;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+      flex-direction: column;
       color: var(--text);
     }
 
-    /* ── Phone frame (desktop) ─────────────────────────────────────────── */
-    .phone-wrap { perspective: 1200px; }
+    .phone-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
 
     .phone {
-      width: 390px;
-      height: 844px;
+      flex: 1;
       background: var(--bg);
-      border-radius: 52px;
-      border: 10px solid #252535;
-      box-shadow:
-        0 0 0 1px #333,
-        0 40px 100px rgba(0,0,0,.85),
-        inset 0 1px 0 rgba(255,255,255,.06);
-      overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
-      transition: transform .3s ease;
+      min-height: 0;
     }
 
-    /* Power/volume buttons */
-    .phone::before {
-      content: '';
-      position: absolute;
-      right: -12px;
-      top: 110px;
-      width: 4px;
-      height: 60px;
-      background: #333;
-      border-radius: 0 4px 4px 0;
-      box-shadow: 0 90px 0 #333;
-    }
-    .phone::after {
-      content: '';
-      position: absolute;
-      left: -12px;
-      top: 90px;
-      width: 4px;
-      height: 42px;
-      background: #333;
-      border-radius: 4px 0 0 4px;
-      box-shadow: 0 56px 0 #333, 0 106px 0 #333;
-    }
+    /* Phone chrome hidden on real phones (OS provides status bar / buttons) */
+    .phone::before, .phone::after { display: none; }
 
-    /* ── Full-screen on real phones ────────────────────────────────────── */
-    @media (max-width: 430px) {
-      body { padding: 0; background: var(--bg); align-items: stretch; }
-      .phone-wrap { width: 100%; height: 100dvh; }
-      .phone {
-        width: 100%;
-        height: 100dvh;
-        border-radius: 0;
-        border: none;
-        box-shadow: none;
-      }
-      .phone::before, .phone::after { display: none; }
-    }
-
-    /* ── Notch / Dynamic Island ────────────────────────────────────────── */
+    /* ── Notch / Dynamic Island — desktop only ─────────────────────────── */
     .notch {
+      display: none;
       position: absolute;
       top: 12px;
       left: 50%;
@@ -114,9 +77,9 @@
       z-index: 20;
     }
 
-    /* ── Status bar ────────────────────────────────────────────────────── */
+    /* ── Status bar — desktop only ─────────────────────────────────────── */
     .status-bar {
-      display: flex;
+      display: none;
       justify-content: space-between;
       align-items: center;
       padding: 18px 24px 6px;
@@ -133,7 +96,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 20px 12px;
+      padding: 16px 20px 12px;
       flex-shrink: 0;
     }
     .app-bar-title {
@@ -162,8 +125,10 @@
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0 14px 14px;
+      padding: 0 14px 80px;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      min-height: 0;
     }
     .content::-webkit-scrollbar { display: none; }
 
@@ -295,7 +260,7 @@
 
     /* ── FAB ────────────────────────────────────────────────────────────── */
     .fab {
-      position: absolute;
+      position: fixed;
       right: 18px;
       bottom: 24px;
       width: 56px; height: 56px;
@@ -392,7 +357,7 @@
     /* ── Install banner ──────────────────────────────────────────────────── */
     .install-bar {
       display: none;
-      position: absolute;
+      position: fixed;
       bottom: 90px;
       left: 14px; right: 14px;
       background: var(--card2);
@@ -427,6 +392,68 @@
     .ok      { color: var(--ok);      }
     .warn    { color: var(--warn);     }
     .danger  { color: var(--danger);   }
+
+    /* ── Desktop: phone-frame mockup — MUST be last to override mobile base ── */
+    @media (min-width: 601px) {
+      html { height: auto; }
+      body {
+        height: auto;
+        min-height: 100vh;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+      .phone-wrap {
+        flex: none;
+        display: block;
+        perspective: 1200px;
+      }
+      .phone {
+        flex: none;
+        min-height: unset;
+        width: 390px;
+        height: 844px;
+        border-radius: 52px;
+        border: 10px solid #252535;
+        box-shadow:
+          0 0 0 1px #333,
+          0 40px 100px rgba(0,0,0,.85),
+          inset 0 1px 0 rgba(255,255,255,.06);
+        overflow: hidden;
+        transition: transform .3s ease;
+      }
+      .phone::before {
+        display: block;
+        content: '';
+        position: absolute;
+        right: -12px;
+        top: 110px;
+        width: 4px;
+        height: 60px;
+        background: #333;
+        border-radius: 0 4px 4px 0;
+        box-shadow: 0 90px 0 #333;
+      }
+      .phone::after {
+        display: block;
+        content: '';
+        position: absolute;
+        left: -12px;
+        top: 90px;
+        width: 4px;
+        height: 42px;
+        background: #333;
+        border-radius: 4px 0 0 4px;
+        box-shadow: 0 56px 0 #333, 0 106px 0 #333;
+      }
+      .notch      { display: block; }
+      .status-bar { display: flex; }
+      .app-bar    { padding: 8px 20px 12px; }
+      .content    { padding: 0 14px 14px; min-height: unset; }
+      .fab         { position: absolute; }
+      .install-bar { position: absolute; }
+    }
   </style>
 </head>
 <body>
