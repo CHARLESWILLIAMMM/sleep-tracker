@@ -101,17 +101,23 @@ public partial class SleepViewModel : ObservableObject
         var dailyHours = await _database.GetDailySleepHoursAsync(RollingWindowDays)
             .ConfigureAwait(false);
 
-        // 2. Rolling 14-day average (defaults to 0 when no data exists yet).
-        AverageSleepHours = dailyHours.Values.DefaultIfEmpty(0.0).Average();
+        // 2. Rolling 14-day average — only over days that have actual readings.
+        //    Days with no sensor data (0.0 h) are excluded so a fresh install
+        //    shows 0 h rather than a falsely-low average.
+        var loggedHours = dailyHours.Values.Where(h => h > 0).ToList();
+        AverageSleepHours = loggedHours.Count > 0
+            ? Math.Round(loggedHours.Average(), 2)
+            : 0.0;
 
         // 3. Last night's sleep (yesterday's UTC date).
         var yesterday = DateTime.UtcNow.Date.AddDays(-1);
         LastNightSleepHours = dailyHours.TryGetValue(yesterday, out double lastNight)
             ? lastNight : 0.0;
 
-        // 4. Sleep Debt = Σ (baseline − actual) over the rolling window.
-        //    A positive value means the user is sleep-deprived.
-        double totalDebt = dailyHours.Values.Sum(h => BaselineSleepHours - h);
+        // 4. Sleep Debt = Σ (baseline − actual) over LOGGED days only.
+        //    Days with no readings are excluded: "unlogged" ≠ "0 h slept".
+        //    Without this guard a fresh install shows 14 × 8 = 112 h of debt.
+        double totalDebt = loggedHours.Sum(h => BaselineSleepHours - h);
         SleepDebt = Math.Round(totalDebt, 2);
 
         SleepDebtSummary = SleepDebt >= 0

@@ -677,7 +677,8 @@ function dayAbbr(dateStr) {
    ═════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Calculates sleep debt as Σ(8h − actual) over the rolling 14-day window.
+ * Calculates sleep debt as Σ(8h − actual) over logged days in the rolling
+ * 14-day window.  Days with no log entry are skipped (unlogged ≠ 0 h slept).
  * Positive = under-slept (in debt); negative = over-slept (surplus).
  * Matches SleepViewModel.RefreshAsync() calculation.
  */
@@ -687,24 +688,27 @@ function calcSleepDebt(logs) {
   for (let i = 0; i < WINDOW; i++) {
     const date = offsetDate(today, -i);
     const log  = logs.find(l => l.date === date);
-    debt += BASELINE - (log ? log.hours : 0);
+    if (log) debt += BASELINE - log.hours;
   }
   return Math.round(debt * 10) / 10;
 }
 
 /**
- * 14-day average sleep (hours).
+ * 14-day average sleep (hours), computed only over days that have a log
+ * entry.  Days with no entry are excluded so a fresh install shows 0 h
+ * rather than a falsely-low average.
  * Matches SleepViewModel.AverageSleepHours.
  */
 function calcAverage(logs) {
   const today = todayUTC();
   let total = 0;
+  let count = 0;
   for (let i = 0; i < WINDOW; i++) {
     const date = offsetDate(today, -i);
     const log  = logs.find(l => l.date === date);
-    total += log ? log.hours : 0;
+    if (log) { total += log.hours; count++; }
   }
-  return Math.round(total / WINDOW * 10) / 10;
+  return count > 0 ? Math.round(total / count * 10) / 10 : 0;
 }
 
 /**
