@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - "copilot/**"   # runs tests on every copilot branch; only deploys on main
+      - "copilot/**"   # runs tests and deploys on all branches
   workflow_dispatch:
 
 # Required for GitHub Pages deployment
@@ -37,12 +37,10 @@ jobs:
       - name: Run tests
         run: dotnet test SleepTracker.Tests/SleepTracker.Tests.csproj --no-restore --verbosity minimal
 
-  # ── Deploy the PWA to GitHub Pages (main branch only) ───────────────────
+  # ── Deploy the PWA to GitHub Pages ──────────────────────────────────────
   deploy:
     name: Deploy to GitHub Pages
     needs: test
-    # Only deploy from main — copilot/** branches run tests only
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

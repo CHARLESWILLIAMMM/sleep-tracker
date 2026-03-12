@@ -2,7 +2,16 @@
 
 A local-first sleep and energy tracking app that runs **right in your browser** — no app store, no account needed.
 
-## 🔗 Open the app
+## ⚠️ Getting the link to work — do this first (30 seconds)
+
+> If you see a **404 page**, GitHub Pages is not enabled yet.  
+> Fix it in **3 clicks**:
+
+1. Open **https://github.com/CHARLESWILLIAMMM/sleep-tracker/settings/pages**
+2. Under **"Build and deployment → Source"**, choose **GitHub Actions**
+3. Click **Save**
+
+After that, every push automatically deploys. The live link will be:
 
 **→ [https://charleswilliammm.github.io/sleep-tracker/](https://charleswilliammm.github.io/sleep-tracker/)**
 
@@ -55,11 +64,3 @@ sleep-tracker/
 ├── SleepTracker.Tests/              ← xUnit tests for core algorithms
 └── .github/workflows/pages.yml     ← CI: runs tests → deploys to GitHub Pages
 ```
-
----
-
-## Enable GitHub Pages (one-time setup)
-
-1. Go to **Settings → Pages** in this repository
-2. Under **Source**, select **"GitHub Actions"**
-3. The next push will automatically deploy to the live URL above
