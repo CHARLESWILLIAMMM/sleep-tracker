@@ -1,5 +1,5 @@
 /* Sleep Tracker Service Worker — cache-first for app shell, network-first for CDN */
-const CACHE = 'sleep-tracker-v1';
+const CACHE = 'sleep-tracker-v2';
 const APP_SHELL = [
   '/sleep-tracker/',
   '/sleep-tracker/index.html',

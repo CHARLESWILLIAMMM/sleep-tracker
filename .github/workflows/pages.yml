@@ -37,10 +37,11 @@ jobs:
       - name: Run tests
         run: dotnet test SleepTracker.Tests/SleepTracker.Tests.csproj --no-restore --verbosity minimal
 
-  # ── Deploy via GitHub Pages API (works from any branch name) ─────────────
+  # ── Deploy via GitHub Pages API (only from main) ─────────────────────────
   deploy:
     name: Deploy to GitHub Pages
     needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
