@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.sleeptracker.app">
+
+  <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+
+  <!-- Permissions required for sleep tracking -->
+  <uses-permission android:name="android.permission.BODY_SENSORS" />
+  <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <!-- Declare the accelerometer and light sensor features as optional so the
+       app can still install on devices that lack one of them -->
+  <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+  <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
+
+  <application android:allowBackup="true"
+               android:icon="@mipmap/appicon"
+               android:roundIcon="@mipmap/appicon_round"
+               android:supportsRtl="true"
+               android:label="@string/app_name">
+
+    <!-- Main MAUI activity -->
+    <activity android:name="com.sleeptracker.app.MainActivity"
+              android:exported="true"
+              android:launchMode="singleTop"
+              android:theme="@style/Maui.SplashTheme"
+              android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|keyboard|keyboardHidden|navigation">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+
+    <!-- Android Foreground Service for continuous sleep sensor monitoring -->
+    <service android:name="com.sleeptracker.app.SleepTrackingService"
+             android:enabled="true"
+             android:exported="false"
+             android:foregroundServiceType="health" />
+
+    <!-- Boot receiver to restart the service after device reboot -->
+    <receiver android:name="com.sleeptracker.app.BootReceiver"
+              android:enabled="true"
+              android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+      </intent-filter>
+    </receiver>
+
+  </application>
+
+</manifest>
