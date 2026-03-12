@@ -1,0 +1,62 @@
+name: Deploy Sleep Tracker to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - "copilot/**"
+  workflow_dispatch:
+
+# Required for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; do not cancel in-progress runs
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # ── Run tests first ─────────────────────────────────────────────────────
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore SleepTracker.Tests/SleepTracker.Tests.csproj
+
+      - name: Run tests
+        run: dotnet test SleepTracker.Tests/SleepTracker.Tests.csproj --no-restore --verbosity minimal
+
+  # ── Deploy the PWA to GitHub Pages ──────────────────────────────────────
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
