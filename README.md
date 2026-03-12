@@ -8,15 +8,17 @@ A local-first sleep and energy tracking app that runs **right in your browser** 
 
 ---
 
-## ⚙️ GitHub Pages setup (one-time, 3 clicks)
+## ⚙️ ONE-TIME GitHub Pages setup (do this once, takes 30 seconds)
+
+> **You must change the Pages source to "GitHub Actions"** — "Deploy from a branch" will NOT work (it shows the README instead of the app).
 
 1. Go to **https://github.com/CHARLESWILLIAMMM/sleep-tracker/settings/pages**
-2. **Source** → `Deploy from a branch`
-3. **Branch** → `copilot/add-sleep-debt-calculation` · **Folder** → `/ (root)` → click **Save**
+2. Under **"Build and deployment"**, change **Source** from `Deploy from a branch` → **`GitHub Actions`**
+3. Click **Save**
 
-> After the PR is merged into `main`, change the branch to `main` and keep folder `/ (root)`.
+That's it. The workflow will deploy automatically on every push and the link above will show the full app.
 
-On Android: tap the three-dot menu → **"Add to Home Screen"** to install it as a native app.
+On Android: tap the three-dot menu → **"Add to Home Screen"** to install as a native app.
 
 ---
 
@@ -46,10 +48,11 @@ All 27 unit + integration tests should pass.
 
 ```
 sleep-tracker/
-├── index.html                       ← PWA web app (served by GitHub Pages)
+├── index.html                       ← PWA web app (deployed to GitHub Pages)
 ├── manifest.json                    ← PWA manifest (installable on Android)
 ├── sw.js                            ← Service worker (offline support)
 ├── icon.svg                         ← App icon
+├── .nojekyll                        ← Prevents Jekyll from processing the site
 │
 ├── SleepTracker/                    ← .NET MAUI Android app (native)
 │   ├── Platforms/Android/
@@ -62,5 +65,5 @@ sleep-tracker/
 │   └── ViewModels/SleepViewModel.cs ← Sleep Debt + Energy Curve algorithms
 │
 ├── SleepTracker.Tests/              ← xUnit tests for core algorithms
-└── .github/workflows/pages.yml     ← CI: runs tests on every push
+└── .github/workflows/pages.yml     ← CI: tests + deploy via GitHub Actions Pages API
 ```
