@@ -9,7 +9,7 @@ A local-first sleep and energy tracking app that runs **right in your browser** 
 
 1. Open **https://github.com/CHARLESWILLIAMMM/sleep-tracker/settings/pages**
 2. Under **"Build and deployment → Source"**, choose **Deploy from a branch**
-3. Set **Branch** to `gh-pages` and folder to `/ (root)`, then click **Save**
+3. Set **Branch** to `main` (or `gh-pages` once CI has run) and folder to `/ (root)`, then click **Save**
 
 After that, every push automatically runs the tests and deploys. The live link will be:
 
@@ -45,11 +45,10 @@ All 27 unit + integration tests should pass.
 
 ```
 sleep-tracker/
-├── docs/                            ← PWA web app (deployed to GitHub Pages)
-│   ├── index.html                   ← Complete Android-like UI + algorithms
-│   ├── manifest.json                ← PWA manifest (installable on Android)
-│   ├── sw.js                        ← Service worker (offline support)
-│   └── icon.svg                     ← App icon
+├── index.html                       ← PWA web app (deployed to GitHub Pages)
+├── manifest.json                    ← PWA manifest (installable on Android)
+├── sw.js                            ← Service worker (offline support)
+├── icon.svg                         ← App icon
 │
 ├── SleepTracker/                    ← .NET MAUI Android app (native)
 │   ├── Platforms/Android/
