@@ -715,12 +715,26 @@ setInterval(updateClock, 10000);
    ═════════════════════════════════════════════════════════════════════════ */
 const CIRCUMFERENCE = 2 * Math.PI * 58; // r=58 → ≈364.4
 
+// Thresholds and colours shared by the ring, energy chart, and history bars
+const ENERGY_HIGH  = 70;
+const ENERGY_MID   = 40;
+const COLOR_HIGH   = '#66BB6A';
+const COLOR_MID    = '#FFB74D';
+const COLOR_LOW    = '#EF5350';
+// Chart.js bar colours (slightly transparent versions of the above)
+const CHART_HIGH   = 'rgba(102,187,106,.75)';
+const CHART_MID    = 'rgba(255,183,77,.65)';
+const CHART_LOW    = 'rgba(239,83,80,.6)';
+// Shared x-axis tick labels for the 24-hour chart (every 6 hours)
+const HOUR_LABELS  = Array.from({ length: 24 }, (_, h) => h % 6 === 0 ? `${h}:00` : '');
+
 function setRing(energy) {
   const arc = document.getElementById('ringArc');
   const offset = CIRCUMFERENCE * (1 - energy / 100);
   arc.style.strokeDashoffset = offset;
-  // Colour: green ≥70, amber 40–69, red <40
-  arc.style.stroke = energy >= 70 ? '#66BB6A' : energy >= 40 ? '#FFB74D' : '#EF5350';
+  arc.style.stroke = energy >= ENERGY_HIGH ? COLOR_HIGH
+                   : energy >= ENERGY_MID  ? COLOR_MID
+                   :                         COLOR_LOW;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -731,12 +745,12 @@ let energyChartInst = null;
 function renderEnergyChart(energyCurve) {
   const ctx = document.getElementById('energyChart').getContext('2d');
   const currentHour = new Date().getHours();
-  const labels = Array.from({ length: 24 }, (_, h) => h % 6 === 0 ? `${h}:00` : '');
+  const labels = HOUR_LABELS;
   const bgColors = energyCurve.map((v, i) => {
     if (i === currentHour) return '#FFD54F';          // current hour — gold
-    return v >= 70 ? 'rgba(102,187,106,.75)' :
-           v >= 40 ? 'rgba(255,183,77,.65)'  :
-                     'rgba(239,83,80,.6)';
+    return v >= ENERGY_HIGH ? CHART_HIGH
+         : v >= ENERGY_MID  ? CHART_MID
+         :                    CHART_LOW;
   });
 
   if (energyChartInst) energyChartInst.destroy();
@@ -794,10 +808,7 @@ function renderHistoryBars(logs) {
     const hours = log ? log.hours : 0;
     const pct   = Math.min(hours / MAX_SLEEP, 1);
     const px    = Math.max(Math.round(pct * MAX_H), hours > 0 ? 3 : 1);
-    const color = hours >= 7 ? 'var(--ok)' : hours >= 5 ? 'var(--warn)' : hours > 0 ? 'var(--danger)' : 'rgba(92,107,192,.2)';
-
-    // 8-hour baseline position
-    const baselinePx = Math.round((8 / MAX_SLEEP) * MAX_H);
+    const color = hours >= 7 ? `var(--ok)` : hours >= 5 ? `var(--warn)` : hours > 0 ? `var(--danger)` : 'rgba(92,107,192,.2)';
 
     const col = document.createElement('div');
     col.className = 'bar-col';
@@ -809,10 +820,9 @@ function renderHistoryBars(logs) {
     container.appendChild(col);
   }
 
-  // Dashed baseline at 8h position
-  const MAX_H_calc = 56;
+  // Dashed baseline at 8h position (reuses MAX_H from above)
   const baselinePct = 8 / MAX_SLEEP;
-  const baselineBottom = Math.round(baselinePct * MAX_H_calc) + 20; // +20 for day labels
+  const baselineBottom = Math.round(baselinePct * MAX_H) + 20; // +20 for day labels
   const line = document.createElement('div');
   line.className = 'baseline-line';
   line.style.bottom = baselineBottom + 'px';
@@ -921,7 +931,12 @@ function calcHoursFromTimes(bed, wake) {
   const [bh, bm] = bed.split(':').map(Number);
   const [wh, wm] = wake.split(':').map(Number);
   let diff = (wh * 60 + wm) - (bh * 60 + bm);
-  if (diff <= 0) diff += 24 * 60;   // crossed midnight
+  // Assumption: sleep always spans midnight (bedtime is in the evening, wake
+  // time is in the morning of the next day).  When the raw diff is ≤ 0 we add
+  // 24 h to account for the date boundary.  We cap at 20 h to reject clearly
+  // invalid inputs (e.g. bedtime 01:00 / wake 23:00 on the same day).
+  if (diff <= 0) diff += 24 * 60;
+  if (diff > 20 * 60) diff = 20 * 60;  // cap at 20 hours
   return Math.round(diff / 60 * 10) / 10;
 }
 

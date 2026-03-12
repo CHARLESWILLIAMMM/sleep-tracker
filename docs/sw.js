@@ -4,8 +4,9 @@ const APP_SHELL = [
   '/sleep-tracker/',
   '/sleep-tracker/index.html',
   '/sleep-tracker/manifest.json',
-  '/sleep-tracker/icon.svg',
-  '/sleep-tracker/sw.js'
+  '/sleep-tracker/icon.svg'
+  // Note: sw.js itself is intentionally excluded — the browser must always fetch
+  // the latest service worker script directly so updates are detected immediately.
 ];
 
 self.addEventListener('install', e => {
