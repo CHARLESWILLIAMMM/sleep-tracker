@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D0D1A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sleep Tracker" />
+  <title>Sleep Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & root vars ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0D0D1A;
+      --card:      #1A1A2E;
+      --card2:     #16213E;
+      --accent:    #5C6BC0;
+      --accent-lt: #7986CB;
+      --text:      #E8EAF6;
+      --text2:     #9FA8DA;
+      --danger:    #EF5350;
+      --warn:      #FFB74D;
+      --ok:        #66BB6A;
+      --border:    rgba(92,107,192,.18);
+      --radius:    18px;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: radial-gradient(ellipse at top, #1a1a3e 0%, #050510 70%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: var(--text);
+    }
+
+    /* ── Phone frame (desktop) ─────────────────────────────────────────── */
+    .phone-wrap { perspective: 1200px; }
+
+    .phone {
+      width: 390px;
+      height: 844px;
+      background: var(--bg);
+      border-radius: 52px;
+      border: 10px solid #252535;
+      box-shadow:
+        0 0 0 1px #333,
+        0 40px 100px rgba(0,0,0,.85),
+        inset 0 1px 0 rgba(255,255,255,.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: transform .3s ease;
+    }
+
+    /* Power/volume buttons */
+    .phone::before {
+      content: '';
+      position: absolute;
+      right: -12px;
+      top: 110px;
+      width: 4px;
+      height: 60px;
+      background: #333;
+      border-radius: 0 4px 4px 0;
+      box-shadow: 0 90px 0 #333;
+    }
+    .phone::after {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 90px;
+      width: 4px;
+      height: 42px;
+      background: #333;
+      border-radius: 4px 0 0 4px;
+      box-shadow: 0 56px 0 #333, 0 106px 0 #333;
+    }
+
+    /* ── Full-screen on real phones ────────────────────────────────────── */
+    @media (max-width: 430px) {
+      body { padding: 0; background: var(--bg); align-items: stretch; }
+      .phone-wrap { width: 100%; height: 100dvh; }
+      .phone {
+        width: 100%;
+        height: 100dvh;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+      .phone::before, .phone::after { display: none; }
+    }
+
+    /* ── Notch / Dynamic Island ────────────────────────────────────────── */
+    .notch {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 32px;
+      background: #0d0d1a;
+      border: 2px solid #252535;
+      border-radius: 20px;
+      z-index: 20;
+    }
+
+    /* ── Status bar ────────────────────────────────────────────────────── */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .3px;
+      flex-shrink: 0;
+    }
+    .status-icons { display: flex; gap: 6px; align-items: center; }
+    .status-icons svg { width: 16px; height: 16px; fill: var(--text); }
+
+    /* ── App bar ───────────────────────────────────────────────────────── */
+    .app-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 20px 12px;
+      flex-shrink: 0;
+    }
+    .app-bar-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .icon-btn:hover { background: var(--card2); }
+
+    /* ── Scroll content ─────────────────────────────────────────────────── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 14px 14px;
+      scrollbar-width: none;
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    /* ── Energy hero ────────────────────────────────────────────────────── */
+    .energy-hero {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 14px 6px 18px;
+    }
+    .ring-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+    .ring-wrap svg {
+      width: 140px;
+      height: 140px;
+      transform: rotate(-90deg);
+    }
+    .ring-bg  { fill: none; stroke: var(--card2); stroke-width: 10; }
+    .ring-arc { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .8s ease, stroke .4s; }
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-value  { font-size: 30px; font-weight: 800; line-height: 1; }
+    .ring-unit   { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .ring-label  { font-size: 11px; color: var(--text2); margin-top: 3px; letter-spacing: .3px; }
+
+    .hero-stats { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .hero-stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+    .hero-stat-value { font-size: 18px; font-weight: 700; margin-top: 1px; }
+
+    /* ── Cards ──────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 12px rgba(0,0,0,.3);
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+    .card-title  { font-size: 14px; font-weight: 700; letter-spacing: .2px; }
+    .card-sub    { font-size: 11px; color: var(--text2); }
+
+    /* ── Debt card ──────────────────────────────────────────────────────── */
+    .debt-value {
+      font-size: 32px;
+      font-weight: 800;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .debt-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(92,107,192,.2);
+      color: var(--accent-lt);
+      margin-bottom: 14px;
+    }
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-box {
+      background: var(--card2);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; }
+    .stat-val   { font-size: 18px; font-weight: 700; margin-top: 3px; }
+
+    /* ── Chart containers ────────────────────────────────────────────────── */
+    .chart-box { height: 150px; position: relative; }
+
+    /* ── History bars ────────────────────────────────────────────────────── */
+    .bar-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 80px;
+      padding-bottom: 20px;
+      position: relative;
+    }
+    .baseline-line {
+      position: absolute;
+      left: 0; right: 0;
+      border-top: 1px dashed rgba(92,107,192,.45);
+      pointer-events: none;
+    }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar-fill {
+      width: 100%;
+      border-radius: 5px 5px 0 0;
+      transition: height .6s ease;
+      min-height: 3px;
+    }
+    .bar-day { font-size: 9px; color: var(--text2); }
+    .bar-val { font-size: 9px; color: var(--text2); position: absolute; top: -16px; width: 100%; text-align: center; }
+
+    /* ── Logs list ──────────────────────────────────────────────────────── */
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-date  { font-size: 13px; font-weight: 600; }
+    .log-meta  { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .log-hours { font-size: 20px; font-weight: 800; }
+    .empty-msg { color: var(--text2); font-size: 13px; text-align: center; padding: 20px 0; line-height: 1.7; }
+
+    /* ── FAB ────────────────────────────────────────────────────────────── */
+    .fab {
+      position: absolute;
+      right: 18px;
+      bottom: 24px;
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 28px;
+      font-weight: 300;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(92,107,192,.55);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .15s, box-shadow .15s;
+      z-index: 10;
+    }
+    .fab:active { transform: scale(.92); box-shadow: 0 2px 10px rgba(92,107,192,.4); }
+
+    /* ── Bottom sheet ────────────────────────────────────────────────────── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 30;
+      backdrop-filter: blur(4px);
+    }
+    .overlay.open { display: block; }
+
+    .sheet {
+      position: fixed;
+      bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+      width: min(390px, 100vw);
+      background: #1f1f38;
+      border-radius: 28px 28px 0 0;
+      padding: 0 20px 32px;
+      z-index: 40;
+      transition: transform .3s cubic-bezier(.2,.8,.3,1);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -8px 40px rgba(0,0,0,.6);
+    }
+    .sheet.open { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle {
+      width: 40px; height: 4px;
+      background: rgba(255,255,255,.15);
+      border-radius: 2px;
+      margin: 12px auto 20px;
+    }
+    .sheet-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 6px;
+    }
+    .field {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 15px;
+      width: 100%;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      margin-bottom: 14px;
+      transition: border-color .2s;
+    }
+    .field:focus { border-color: var(--accent); }
+    .field::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.5); }
+
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .hours-pill {
+      background: rgba(92,107,192,.15);
+      border: 1px solid rgba(92,107,192,.3);
+      border-radius: 14px;
+      padding: 12px 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .hours-pill .big { font-size: 26px; font-weight: 800; color: var(--accent-lt); }
+    .hours-pill .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    .btn-row  { display: flex; gap: 10px; }
+    .btn-row button { flex: 1; border: none; border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn-row button:active { opacity: .75; }
+    .btn-cancel { background: var(--card2); color: var(--text2); }
+    .btn-save   { background: var(--accent); color: #fff; }
+
+    /* ── Install banner ──────────────────────────────────────────────────── */
+    .install-bar {
+      display: none;
+      position: absolute;
+      bottom: 90px;
+      left: 14px; right: 14px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--text2);
+      z-index: 5;
+      gap: 10px;
+      align-items: center;
+    }
+    .install-bar.show { display: flex; }
+    .btn-install {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .install-bar-close {
+      background: none; border: none; color: var(--text2); cursor: pointer; font-size: 16px; margin-left: auto; padding: 0 4px;
+    }
+
+    /* ── Utility ─────────────────────────────────────────────────────────── */
+    .accent  { color: var(--accent-lt); }
+    .ok      { color: var(--ok);      }
+    .warn    { color: var(--warn);     }
+    .danger  { color: var(--danger);   }
+  </style>
+</head>
+<body>
+
+<div class="phone-wrap">
+  <div class="phone" id="phone">
+
+    <!-- Notch -->
+    <div class="notch"></div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span id="clock">9:41</span>
+      <div class="status-icons">
+        <!-- Signal bars -->
+        <svg viewBox="0 0 24 24"><rect x="1" y="14" width="3" height="8" rx="1"/><rect x="6" y="10" width="3" height="12" rx="1"/><rect x="11" y="6" width="3" height="16" rx="1"/><rect x="16" y="2" width="3" height="20" rx="1" opacity=".3"/></svg>
+        <!-- WiFi -->
+        <svg viewBox="0 0 24 24"><path d="M1 7.5C4.7 3.8 9.6 2 12 2s7.3 1.8 11 5.5l-2.1 2.1C17.6 6.3 14.9 5 12 5S6.4 6.3 3.1 9.6L1 7.5z"/><path d="M5.2 11.7C7.4 9.4 9.6 8 12 8s4.6 1.4 6.8 3.7l-2.1 2.1C15 12.2 13.5 11 12 11s-3 1.2-4.7 2.8l-2.1-2.1z" opacity=".6"/><circle cx="12" cy="19" r="2"/></svg>
+        <!-- Battery -->
+        <svg viewBox="0 0 24 24"><rect x="1" y="7" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="19" y="10" width="3" height="4" rx="1"/><rect x="3" y="9" width="12" height="6" rx="1"/></svg>
+      </div>
+    </div>
+
+    <!-- App bar -->
+    <div class="app-bar">
+      <div class="app-bar-title">🌙 Sleep Tracker</div>
+      <button class="icon-btn" id="menuBtn" title="More options" aria-label="Menu">⋮</button>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="content" id="content">
+
+      <!-- ── Energy hero ── -->
+      <div class="energy-hero">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 140 140">
+            <circle class="ring-bg" cx="70" cy="70" r="58"/>
+            <circle class="ring-arc" id="ringArc" cx="70" cy="70" r="58"
+              stroke-dasharray="364.4"
+              stroke-dashoffset="364.4"/>
+          </svg>
+          <div class="ring-center">
+            <span class="ring-value" id="energyNow">--</span>
+            <span class="ring-unit">/ 100</span>
+            <span class="ring-label">energy now</span>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-label">Peak today</div>
+            <div class="hero-stat-value accent" id="peakTime">--:--</div>
+          </div>
+          <div>
+            <div class="hero-stat-label">Peak level</div>
+            <div class="hero-stat-value" id="peakLevel">--%</div>
+          </div>
+          <div>
+            <div class="hero-stat-label">Next dip</div>
+            <div class="hero-stat-value" id="nextDip">--:--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Sleep Debt ── -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Sleep Debt</span>
+          <span class="card-sub">14-day rolling</span>
+        </div>
+        <span class="debt-value" id="debtValue">0.0 h</span>
+        <span class="debt-badge" id="debtBadge">loading…</span>
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="stat-label">14-day avg</div>
+            <div class="stat-val" id="avgSleep">-- h</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Last night</div>
+            <div class="stat-val" id="lastNight">-- h</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 24-Hour Energy Curve ── -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">24-Hour Energy</span>
+          <span class="card-sub">predicted curve</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="energyChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ── 7-Day Sleep History ── -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Sleep History</span>
+          <span class="card-sub">last 7 nights</span>
+        </div>
+        <div id="historyBars" class="bar-row"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <span style="font-size:10px;color:var(--text2)">■ <span style="color:var(--ok)">≥7 h</span>&nbsp; ■ <span style="color:var(--warn)">5–7 h</span>&nbsp; ■ <span style="color:var(--danger)">&lt;5 h</span></span>
+          <span style="font-size:10px;color:var(--text2)">— 8 h goal</span>
+        </div>
+      </div>
+
+      <!-- ── Recent Logs ── -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Sleep Log</span>
+          <span class="card-sub" id="logCount">0 entries</span>
+        </div>
+        <div id="logsList"></div>
+      </div>
+
+      <div style="height:80px"></div>
+    </div><!-- /content -->
+
+    <!-- FAB -->
+    <button class="fab" id="fab" aria-label="Log sleep">+</button>
+
+    <!-- Install banner -->
+    <div class="install-bar" id="installBar">
+      <span>📲 Add to your home screen</span>
+      <button class="btn-install" id="installBtn">Install</button>
+      <button class="install-bar-close" id="installClose" aria-label="Dismiss">✕</button>
+    </div>
+
+  </div><!-- /phone -->
+</div><!-- /phone-wrap -->
+
+<!-- Overlay -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Bottom sheet — log sleep -->
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Log Sleep</div>
+
+  <label for="sleepDate">Night (date you went to sleep)</label>
+  <input class="field" type="date" id="sleepDate" />
+
+  <div class="time-row">
+    <div>
+      <label for="bedtime">Bedtime</label>
+      <input class="field" type="time" id="bedtime" value="23:00" />
+    </div>
+    <div>
+      <label for="wakeTime">Wake time</label>
+      <input class="field" type="time" id="wakeTime" value="07:00" />
+    </div>
+  </div>
+
+  <div class="hours-pill">
+    <div class="big" id="hoursPreview">8.0</div>
+    <div class="lbl">hours of sleep</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-cancel" id="cancelBtn">Cancel</button>
+    <button class="btn-save"   id="saveBtn">Save</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Constants — mirror the C# SleepViewModel constants exactly
+   ═════════════════════════════════════════════════════════════════════════ */
+const BASELINE   = 8.0;   // hours (SleepViewModel.BaselineSleepHours)
+const WINDOW     = 14;    // days  (SleepViewModel.RollingWindowDays)
+const WAKE_HOUR  = 6;
+const SLEEP_HOUR = 22;
+const ACTIVE_SPAN = SLEEP_HOUR - WAKE_HOUR;  // 16 hours
+const STORAGE_KEY = 'sleep_tracker_v1_logs';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Persistence (localStorage = web equivalent of SQLite)
+   ═════════════════════════════════════════════════════════════════════════ */
+function loadLogs() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveLogs(logs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+}
+function upsertLog(dateStr, hours) {
+  const logs = loadLogs().filter(l => l.date !== dateStr);
+  logs.push({ date: dateStr, hours: Math.round(hours * 10) / 10 });
+  // Keep only last 60 days
+  const cutoff = offsetDate(todayUTC(), -60);
+  saveLogs(logs.filter(l => l.date >= cutoff));
+}
+function deleteLog(dateStr) {
+  saveLogs(loadLogs().filter(l => l.date !== dateStr));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Date helpers
+   ═════════════════════════════════════════════════════════════════════════ */
+function todayUTC() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function offsetDate(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function dateLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function dayAbbr(dateStr) {
+  return DAY_ABBR[new Date(dateStr + 'T00:00:00').getDay()];
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Core algorithms — identical logic to SleepViewModel.cs
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Calculates sleep debt as Σ(8h − actual) over the rolling 14-day window.
+ * Positive = under-slept (in debt); negative = over-slept (surplus).
+ * Matches SleepViewModel.RefreshAsync() calculation.
+ */
+function calcSleepDebt(logs) {
+  const today = todayUTC();
+  let debt = 0;
+  for (let i = 0; i < WINDOW; i++) {
+    const date = offsetDate(today, -i);
+    const log  = logs.find(l => l.date === date);
+    debt += BASELINE - (log ? log.hours : 0);
+  }
+  return Math.round(debt * 10) / 10;
+}
+
+/**
+ * 14-day average sleep (hours).
+ * Matches SleepViewModel.AverageSleepHours.
+ */
+function calcAverage(logs) {
+  const today = todayUTC();
+  let total = 0;
+  for (let i = 0; i < WINDOW; i++) {
+    const date = offsetDate(today, -i);
+    const log  = logs.find(l => l.date === date);
+    total += log ? log.hours : 0;
+  }
+  return Math.round(total / WINDOW * 10) / 10;
+}
+
+/**
+ * Builds a 24-element energy array.
+ * Matches SleepViewModel.BuildEnergyCurve() exactly:
+ *   base(h) = 50 + 50 × sin( π × (h−6) / 16 )  for h ∈ [6,22]
+ *   base(h) = 5                                   otherwise
+ *   penalty = min(sleepDebt × 5, 40)
+ */
+function buildEnergyCurve(sleepDebt) {
+  const penalty = Math.min(sleepDebt * 5, 40);
+  return Array.from({ length: 24 }, (_, h) => {
+    if (h >= WAKE_HOUR && h <= SLEEP_HOUR) {
+      const phase  = Math.PI * (h - WAKE_HOUR) / ACTIVE_SPAN;
+      const energy = 50 + 50 * Math.sin(phase) - penalty;
+      return Math.round(Math.max(0, Math.min(100, energy)) * 10) / 10;
+    }
+    return 5;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Clock
+   ═════════════════════════════════════════════════════════════════════════ */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Energy ring
+   ═════════════════════════════════════════════════════════════════════════ */
+const CIRCUMFERENCE = 2 * Math.PI * 58; // r=58 → ≈364.4
+
+// Thresholds and colours shared by the ring, energy chart, and history bars
+const ENERGY_HIGH  = 70;
+const ENERGY_MID   = 40;
+const COLOR_HIGH   = '#66BB6A';
+const COLOR_MID    = '#FFB74D';
+const COLOR_LOW    = '#EF5350';
+// Chart.js bar colours (slightly transparent versions of the above)
+const CHART_HIGH   = 'rgba(102,187,106,.75)';
+const CHART_MID    = 'rgba(255,183,77,.65)';
+const CHART_LOW    = 'rgba(239,83,80,.6)';
+// Shared x-axis tick labels for the 24-hour chart (every 6 hours)
+const HOUR_LABELS  = Array.from({ length: 24 }, (_, h) => h % 6 === 0 ? `${h}:00` : '');
+
+function setRing(energy) {
+  const arc = document.getElementById('ringArc');
+  const offset = CIRCUMFERENCE * (1 - energy / 100);
+  arc.style.strokeDashoffset = offset;
+  arc.style.stroke = energy >= ENERGY_HIGH ? COLOR_HIGH
+                   : energy >= ENERGY_MID  ? COLOR_MID
+                   :                         COLOR_LOW;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Chart.js energy curve
+   ═════════════════════════════════════════════════════════════════════════ */
+let energyChartInst = null;
+
+function renderEnergyChart(energyCurve) {
+  const ctx = document.getElementById('energyChart').getContext('2d');
+  const currentHour = new Date().getHours();
+  const labels = HOUR_LABELS;
+  const bgColors = energyCurve.map((v, i) => {
+    if (i === currentHour) return '#FFD54F';          // current hour — gold
+    return v >= ENERGY_HIGH ? CHART_HIGH
+         : v >= ENERGY_MID  ? CHART_MID
+         :                    CHART_LOW;
+  });
+
+  if (energyChartInst) energyChartInst.destroy();
+  energyChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: energyCurve,
+        backgroundColor: bgColors,
+        borderRadius: 3,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 700 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `${items[0].dataIndex}:00`,
+            label: (item)  => `Energy: ${item.raw}%`,
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0, max: 100,
+          grid:  { color: 'rgba(92,107,192,.1)' },
+          ticks: { color: '#9FA8DA', stepSize: 25, callback: v => `${v}` },
+        },
+        x: {
+          grid:  { display: false },
+          ticks: { color: '#9FA8DA', maxRotation: 0 },
+        }
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   History bars (custom CSS, no Chart.js needed)
+   ═════════════════════════════════════════════════════════════════════════ */
+function renderHistoryBars(logs) {
+  const container = document.getElementById('historyBars');
+  container.innerHTML = '';
+  const MAX_H = 56;   // px max bar height (container is 80px, 20px bottom for labels)
+  const MAX_SLEEP = 12;
+
+  for (let i = 6; i >= 0; i--) {
+    const date  = offsetDate(todayUTC(), -i);
+    const log   = logs.find(l => l.date === date);
+    const hours = log ? log.hours : 0;
+    const pct   = Math.min(hours / MAX_SLEEP, 1);
+    const px    = Math.max(Math.round(pct * MAX_H), hours > 0 ? 3 : 1);
+    const color = hours >= 7 ? `var(--ok)` : hours >= 5 ? `var(--warn)` : hours > 0 ? `var(--danger)` : 'rgba(92,107,192,.2)';
+
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.style.position = 'relative';
+    col.innerHTML = `
+      ${hours > 0 ? `<span style="font-size:9px;color:var(--text2);position:absolute;top:-${px + 14}px;left:0;right:0;text-align:center">${hours}h</span>` : ''}
+      <div class="bar-fill" style="height:${px}px;background:${color}"></div>
+      <span class="bar-day">${dayAbbr(date)}</span>`;
+    container.appendChild(col);
+  }
+
+  // Dashed baseline at 8h position (reuses MAX_H from above)
+  const baselinePct = 8 / MAX_SLEEP;
+  const baselineBottom = Math.round(baselinePct * MAX_H) + 20; // +20 for day labels
+  const line = document.createElement('div');
+  line.className = 'baseline-line';
+  line.style.bottom = baselineBottom + 'px';
+  container.appendChild(line);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Logs list
+   ═════════════════════════════════════════════════════════════════════════ */
+function renderLogs(logs) {
+  const el = document.getElementById('logsList');
+  const countEl = document.getElementById('logCount');
+
+  // Sort descending
+  const sorted = [...logs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 14);
+  countEl.textContent = `${logs.length} entr${logs.length === 1 ? 'y' : 'ies'}`;
+
+  if (sorted.length === 0) {
+    el.innerHTML = '<p class="empty-msg">No sleep data yet.<br>Tap <strong>+</strong> to log last night\'s sleep.</p>';
+    return;
+  }
+  el.innerHTML = sorted.map(l => {
+    const cls = l.hours >= 7 ? 'ok' : l.hours >= 5 ? 'warn' : 'danger';
+    return `
+      <div class="log-item">
+        <div>
+          <div class="log-date">${dateLabel(l.date)}</div>
+          <div class="log-meta">Logged</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="log-hours ${cls}">${l.hours}h</span>
+          <button onclick="removeLog('${l.date}')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px;line-height:1;padding:4px" aria-label="Delete">×</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function removeLog(dateStr) {
+  deleteLog(dateStr);
+  refresh();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Main refresh — recalculates all metrics and redraws UI
+   ═════════════════════════════════════════════════════════════════════════ */
+function refresh() {
+  const logs       = loadLogs();
+  const sleepDebt  = calcSleepDebt(logs);
+  const avgSleep   = calcAverage(logs);
+  const energyCurve = buildEnergyCurve(sleepDebt);
+  const now        = new Date().getHours();
+  const currentEnergy = energyCurve[now];
+
+  // ── Energy ring
+  setRing(currentEnergy);
+  document.getElementById('energyNow').textContent = currentEnergy;
+
+  // Peak hour (max energy)
+  const peakHour  = energyCurve.indexOf(Math.max(...energyCurve));
+  const peakLevel = energyCurve[peakHour];
+  document.getElementById('peakTime').textContent  = `${String(peakHour).padStart(2,'0')}:00`;
+  document.getElementById('peakLevel').textContent = `${peakLevel}%`;
+
+  // Next dip — first hour after peak where energy drops below 30%
+  let nextDipHour = null;
+  for (let h = peakHour + 1; h < 24; h++) {
+    if (energyCurve[h] < 30) { nextDipHour = h; break; }
+  }
+  document.getElementById('nextDip').textContent = nextDipHour !== null ? `${String(nextDipHour).padStart(2,'0')}:00` : '—';
+
+  // ── Debt card
+  document.getElementById('debtValue').textContent = `${Math.abs(sleepDebt).toFixed(1)} h`;
+  document.getElementById('debtValue').className = 'debt-value ' +
+    (sleepDebt <= 0 ? 'ok' : sleepDebt < 4 ? 'warn' : 'danger');
+  document.getElementById('debtBadge').textContent =
+    sleepDebt <= -1 ? '🌟 Sleep surplus'   :
+    sleepDebt <=  0 ? '✅ Fully rested'     :
+    sleepDebt <   4 ? '⚠️ Mild sleep debt' :
+                      '🚨 High sleep debt';
+
+  document.getElementById('avgSleep').textContent  = `${avgSleep} h`;
+
+  const yesterday = offsetDate(todayUTC(), -1);
+  const lastLog   = logs.find(l => l.date === yesterday) || logs.find(l => l.date === todayUTC());
+  document.getElementById('lastNight').textContent = lastLog ? `${lastLog.hours} h` : '— h';
+
+  // ── Charts
+  if (typeof Chart !== 'undefined') {
+    renderEnergyChart(energyCurve);
+  }
+  renderHistoryBars(logs);
+  renderLogs(logs);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Log sleep sheet
+   ═════════════════════════════════════════════════════════════════════════ */
+const overlay   = document.getElementById('overlay');
+const sheet     = document.getElementById('sheet');
+const bedtimeEl = document.getElementById('bedtime');
+const wakeEl    = document.getElementById('wakeTime');
+const dateEl    = document.getElementById('sleepDate');
+const previewEl = document.getElementById('hoursPreview');
+
+function calcHoursFromTimes(bed, wake) {
+  const [bh, bm] = bed.split(':').map(Number);
+  const [wh, wm] = wake.split(':').map(Number);
+  let diff = (wh * 60 + wm) - (bh * 60 + bm);
+  // Assumption: sleep always spans midnight (bedtime is in the evening, wake
+  // time is in the morning of the next day).  When the raw diff is ≤ 0 we add
+  // 24 h to account for the date boundary.  We cap at 20 h to reject clearly
+  // invalid inputs (e.g. bedtime 01:00 / wake 23:00 on the same day).
+  if (diff <= 0) diff += 24 * 60;
+  if (diff > 20 * 60) diff = 20 * 60;  // cap at 20 hours
+  return Math.round(diff / 60 * 10) / 10;
+}
+
+function updatePreview() {
+  const h = calcHoursFromTimes(bedtimeEl.value, wakeEl.value);
+  previewEl.textContent = h.toFixed(1);
+  previewEl.className   = 'big ' + (h >= 7 ? 'ok' : h >= 5 ? 'warn' : 'danger');
+}
+bedtimeEl.addEventListener('change', updatePreview);
+wakeEl.addEventListener('change',    updatePreview);
+
+function openSheet(targetDate) {
+  // Default date to yesterday (most common use-case: log after waking up)
+  const defaultDate = targetDate || offsetDate(todayUTC(), -1);
+  dateEl.value    = defaultDate;
+  bedtimeEl.value = '23:00';
+  wakeEl.value    = '07:00';
+  updatePreview();
+
+  overlay.classList.add('open');
+  sheet.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() {
+  overlay.classList.remove('open');
+  sheet.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveLog() {
+  const hours = calcHoursFromTimes(bedtimeEl.value, wakeEl.value);
+  if (hours <= 0 || hours > 24) { alert('Please check your times.'); return; }
+  upsertLog(dateEl.value, hours);
+  closeSheet();
+  refresh();
+}
+
+document.getElementById('fab').addEventListener('click',    () => openSheet());
+document.getElementById('overlay').addEventListener('click', closeSheet);
+document.getElementById('cancelBtn').addEventListener('click', closeSheet);
+document.getElementById('saveBtn').addEventListener('click',   saveLog);
+
+// Handle ?action=log shortcut from PWA manifest
+if (new URLSearchParams(location.search).get('action') === 'log') openSheet();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PWA install prompt
+   ═════════════════════════════════════════════════════════════════════════ */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Only show if not dismissed before
+  if (!localStorage.getItem('install_dismissed')) {
+    document.getElementById('installBar').classList.add('show');
+  }
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') document.getElementById('installBar').classList.remove('show');
+  deferredPrompt = null;
+});
+document.getElementById('installClose').addEventListener('click', () => {
+  document.getElementById('installBar').classList.remove('show');
+  localStorage.setItem('install_dismissed', '1');
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Service worker registration
+   ═════════════════════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Boot
+   ═════════════════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  refresh();
+  // Refresh every 5 minutes so the "energy now" ring stays current
+  setInterval(refresh, 5 * 60 * 1000);
+});
+</script>
+</body>
+</html>

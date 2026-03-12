@@ -1,0 +1,29 @@
+{
+  "name": "Sleep Tracker",
+  "short_name": "Sleep",
+  "description": "Track your sleep debt and daily energy levels",
+  "start_url": "/sleep-tracker/",
+  "scope": "/sleep-tracker/",
+  "display": "standalone",
+  "background_color": "#0D0D1A",
+  "theme_color": "#0D0D1A",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Log Sleep",
+      "short_name": "Log",
+      "url": "/sleep-tracker/?action=log",
+      "description": "Quickly log last night's sleep"
+    }
+  ]
+}
