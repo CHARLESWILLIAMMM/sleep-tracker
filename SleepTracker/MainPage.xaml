@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:SleepTracker.ViewModels"
+             x:Class="SleepTracker.MainPage"
+             Title="Sleep Tracker"
+             BackgroundColor="{StaticResource PageBackgroundColor}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+
+            <!-- ── Header ── -->
+            <Label Text="🌙 Sleep Tracker"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource PrimaryTextColor}"
+                   HorizontalOptions="Center" />
+
+            <!-- ── Tracking toggle ── -->
+            <Frame CornerRadius="12"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True"
+                   Padding="16">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Background Monitoring"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+                    <Switch IsToggled="{Binding IsTracking}"
+                            OnColor="{StaticResource AccentColor}"
+                            ThumbColor="White" />
+                    <Label Text="{Binding TrackingStatus}"
+                           FontSize="13"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- ── Sleep Debt card ── -->
+            <Frame CornerRadius="12"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True"
+                   Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Sleep Debt (14-day rolling)"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                    <Label Text="{Binding SleepDebtSummary}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource AccentColor}"
+                           HorizontalOptions="Center" />
+
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                        <Label Grid.Column="0" Grid.Row="0"
+                               Text="14-day avg"
+                               FontSize="12"
+                               TextColor="{StaticResource SecondaryTextColor}" />
+                        <Label Grid.Column="0" Grid.Row="1"
+                               Text="{Binding AverageSleepHours, StringFormat='{0:F1} h'}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}" />
+
+                        <Label Grid.Column="1" Grid.Row="0"
+                               Text="Last night"
+                               FontSize="12"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               HorizontalOptions="End" />
+                        <Label Grid.Column="1" Grid.Row="1"
+                               Text="{Binding LastNightSleepHours, StringFormat='{0:F1} h'}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource PrimaryTextColor}"
+                               HorizontalOptions="End" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- ── Energy Curve card ── -->
+            <Frame CornerRadius="12"
+                   BackgroundColor="{StaticResource CardBackgroundColor}"
+                   HasShadow="True"
+                   Padding="16">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="24-Hour Energy Prediction"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource PrimaryTextColor}" />
+
+                    <Label Text="Energy level (0–100) by hour of day"
+                           FontSize="12"
+                           TextColor="{StaticResource SecondaryTextColor}" />
+
+                    <!-- Simple bar-chart representation using a CollectionView -->
+                    <CollectionView ItemsSource="{Binding EnergyCurve}"
+                                    HeightRequest="160">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal"
+                                               ItemSpacing="2" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout WidthRequest="12" Spacing="2">
+                                    <BoxView BackgroundColor="{StaticResource AccentColor}"
+                                             VerticalOptions="EndAndExpand"
+                                             HeightRequest="{Binding EnergyLevel}"
+                                             CornerRadius="2" />
+                                    <!-- Show label only for every 6th hour to avoid overlap -->
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!-- Hour labels row -->
+                    <Grid ColumnDefinitions="*,*,*,*,*">
+                        <Label Grid.Column="0" Text="00:00" FontSize="10"
+                               TextColor="{StaticResource SecondaryTextColor}" />
+                        <Label Grid.Column="1" Text="06:00" FontSize="10"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               HorizontalOptions="Center" />
+                        <Label Grid.Column="2" Text="12:00" FontSize="10"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               HorizontalOptions="Center" />
+                        <Label Grid.Column="3" Text="18:00" FontSize="10"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               HorizontalOptions="Center" />
+                        <Label Grid.Column="4" Text="23:00" FontSize="10"
+                               TextColor="{StaticResource SecondaryTextColor}"
+                               HorizontalOptions="End" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- ── Refresh button ── -->
+            <Button Text="Refresh Data"
+                    Command="{Binding RefreshCommand}"
+                    BackgroundColor="{StaticResource AccentColor}"
+                    TextColor="White"
+                    CornerRadius="10"
+                    HeightRequest="48" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

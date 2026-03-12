@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Primary palette -->
+    <Color x:Key="PageBackgroundColor">#0D0D1A</Color>
+    <Color x:Key="CardBackgroundColor">#1A1A2E</Color>
+    <Color x:Key="AccentColor">#5C6BC0</Color>
+    <Color x:Key="PrimaryTextColor">#E8EAF6</Color>
+    <Color x:Key="SecondaryTextColor">#9FA8DA</Color>
+
+    <!-- Status colours -->
+    <Color x:Key="DebtHighColor">#EF5350</Color>
+    <Color x:Key="DebtLowColor">#66BB6A</Color>
+
+</ResourceDictionary>
