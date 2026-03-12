@@ -8,10 +8,10 @@ A local-first sleep and energy tracking app that runs **right in your browser** 
 > Fix it in **3 clicks**:
 
 1. Open **https://github.com/CHARLESWILLIAMMM/sleep-tracker/settings/pages**
-2. Under **"Build and deployment → Source"**, choose **GitHub Actions**
-3. Click **Save**
+2. Under **"Build and deployment → Source"**, choose **Deploy from a branch**
+3. Set **Branch** to `gh-pages` and folder to `/ (root)`, then click **Save**
 
-After that, every push automatically deploys. The live link will be:
+After that, every push automatically runs the tests and deploys. The live link will be:
 
 **→ [https://charleswilliammm.github.io/sleep-tracker/](https://charleswilliammm.github.io/sleep-tracker/)**
 
